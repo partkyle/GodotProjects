@@ -1,0 +1,116 @@
+[gd_scene load_steps=13 format=3 uid="uid://drmw2gbs3y7th"]
+
+[ext_resource type="Shader" path="res://water_demo.gdshader" id="1_2xwny"]
+[ext_resource type="Texture2D" uid="uid://ek8lbpra2000" path="res://icon.svg" id="2_j83us"]
+[ext_resource type="Script" path="res://Water.gd" id="2_sf53r"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fhdts"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_br6ph"]
+sky_material = SubResource("ProceduralSkyMaterial_fhdts")
+
+[sub_resource type="Environment" id="Environment_stkig"]
+background_mode = 2
+sky = SubResource("Sky_br6ph")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_jwyks"]
+size = Vector2(2, 2)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_repn1"]
+fractal_type = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_stf20"]
+seamless = true
+as_normal_map = true
+noise = SubResource("FastNoiseLite_repn1")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xk4ox"]
+render_priority = 0
+shader = ExtResource("1_2xwny")
+shader_parameter/time_scale = 1.0
+shader_parameter/roughness = 0.0
+shader_parameter/water_color = Color(0.278431, 0.494118, 1, 1)
+shader_parameter/use_screen_texture = true
+shader_parameter/water_normal_noise = SubResource("NoiseTexture2D_stf20")
+
+[sub_resource type="QuadMesh" id="QuadMesh_fhcp2"]
+size = Vector2(2, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t0kfs"]
+albedo_texture = ExtResource("2_j83us")
+emission = Color(0, 0.611765, 0, 1)
+
+[node name="WaterDemo" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_stkig")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.472428, 0.881369, 0, -0.881369, -0.472428, 0, 1.86369, -0.432481)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 1, 1)
+
+[node name="Water" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("QuadMesh_jwyks")
+surface_material_override/0 = SubResource("ShaderMaterial_xk4ox")
+script = ExtResource("2_sf53r")
+
+[node name="ImageBelowWater" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("QuadMesh_fhcp2")
+skeleton = NodePath("../Camera3D")
+surface_material_override/0 = SubResource("StandardMaterial3D_t0kfs")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/Control/MarginContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="RoughnessLabel" type="Label" parent="CanvasLayer/Control/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Roughness"
+
+[node name="RoughnessSlider" type="HSlider" parent="CanvasLayer/Control/MarginContainer/GridContainer"]
+custom_minimum_size = Vector2(100, 24)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 1.0
+step = 0.1
+
+[node name="TimeScaleLabel" type="Label" parent="CanvasLayer/Control/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Time Scale"
+
+[node name="TimeScaleSlider" type="HSlider" parent="CanvasLayer/Control/MarginContainer/GridContainer"]
+custom_minimum_size = Vector2(100, 24)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 1.0
+step = 0.1

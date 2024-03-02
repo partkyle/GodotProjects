@@ -1,0 +1,88 @@
+[gd_scene load_steps=16 format=3 uid="uid://b4afya10k4avi"]
+
+[ext_resource type="Shader" path="res://dissolve.gdshader" id="1_a1kxu"]
+[ext_resource type="FontFile" uid="uid://diu1h758afnd4" path="res://font/ComicMono.ttf" id="3_gf1mk"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_0o631"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_3xx16"]
+noise = SubResource("FastNoiseLite_0o631")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j2d4x"]
+render_priority = 0
+shader = ExtResource("1_a1kxu")
+shader_parameter/base_color = Color(0, 1, 1, 1)
+shader_parameter/dissolve_height = 0.57
+shader_parameter/noise_scale = 0.1
+shader_parameter/glow_color = Color(57.292, 0, 14.062, 1)
+shader_parameter/glow_thickness = 0.05
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_3xx16")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_wqper"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_c3ro1"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4dqvy"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_wl27i"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_6bo4r"]
+
+[sub_resource type="FontVariation" id="FontVariation_ut1p3"]
+base_font = ExtResource("3_gf1mk")
+
+[sub_resource type="TextMesh" id="TextMesh_15ird"]
+text = "it works for text meshes too"
+font = SubResource("FontVariation_ut1p3")
+font_size = 58
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v2ov5"]
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="QuadMesh" id="QuadMesh_w8ob4"]
+size = Vector2(100, 59059)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_mm53h"]
+size = Vector2(100, 100)
+
+[node name="Node3D" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.00615, 2.16222, -0.0200818)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("CapsuleMesh_wqper")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.00724, 2.09187, 0)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("BoxMesh_c3ro1")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00723672, 2.09187, 0)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("CylinderMesh_4dqvy")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.99276, 2.09187, 0)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("PrismMesh_wl27i")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.99276, 2.09187, 0)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("TorusMesh_6bo4r")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+material_override = SubResource("ShaderMaterial_j2d4x")
+mesh = SubResource("TextMesh_15ird")
+
+[node name="Wall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.15119, -7.07486)
+material_override = SubResource("StandardMaterial3D_v2ov5")
+mesh = SubResource("QuadMesh_w8ob4")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_v2ov5")
+mesh = SubResource("PlaneMesh_mm53h")
+skeleton = NodePath("../Wall")

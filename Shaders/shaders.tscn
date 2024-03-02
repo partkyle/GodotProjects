@@ -1,0 +1,470 @@
+[gd_scene load_steps=37 format=3 uid="uid://c2cfuvq7l334x"]
+
+[ext_resource type="Script" path="res://Scripts/PerlinNoise3D.gd" id="1_glk4a"]
+[ext_resource type="Shader" uid="uid://cw6om1hlckuy0" path="res://diffuse.tres" id="1_ocsgl"]
+[ext_resource type="PackedScene" uid="uid://r26pqus5cjil" path="res://vert_dissolve.tscn" id="2_qpbab"]
+
+[sub_resource type="VisualShaderNodeCustom" id="VisualShaderNodeCustom_n0xux"]
+default_input_values = [2, 0.0]
+initialized = true
+script = ExtResource("1_glk4a")
+
+[sub_resource type="VisualShaderNodeFloatConstant" id="VisualShaderNodeFloatConstant_5wm45"]
+
+[sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_ufqcn"]
+parameter_name = "NoiseSize"
+hint = 2
+max = 500.0
+step = 1.0
+default_value_enabled = true
+default_value = 10.0
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_0ac24"]
+default_input_values = [0, 0.0, 1, 0.5]
+operator = 2
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_wo0n3"]
+operator = 2
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_pq3pr"]
+operator = 1
+
+[sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_e2nqd"]
+parameter_name = "NoiseScale"
+default_value_enabled = true
+default_value = 0.5
+
+[sub_resource type="VisualShaderNodeVectorDecompose" id="VisualShaderNodeVectorDecompose_6xmj0"]
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_aqyuy"]
+
+[sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_scghk"]
+parameter_name = "GlowThickness"
+hint = 1
+default_value_enabled = true
+default_value = 0.05
+
+[sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_bn7j8"]
+parameter_name = "BaseColor"
+default_value_enabled = true
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_p6twi"]
+operator = 2
+
+[sub_resource type="VisualShaderNodeFloatOp" id="VisualShaderNodeFloatOp_vv5hq"]
+operator = 1
+
+[sub_resource type="VisualShaderNodeStep" id="VisualShaderNodeStep_y0ucb"]
+
+[sub_resource type="VisualShaderNodeVectorOp" id="VisualShaderNodeVectorOp_262vt"]
+operator = 2
+
+[sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_k22tw"]
+input_name = "time"
+
+[sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_t0v6m"]
+input_name = "vertex"
+
+[sub_resource type="VisualShaderNodeFloatConstant" id="VisualShaderNodeFloatConstant_imuxy"]
+constant = 0.5
+
+[sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_gc8s5"]
+parameter_name = "DissolveHeight"
+default_value_enabled = true
+default_value = 0.25
+
+[sub_resource type="VisualShaderNodeStep" id="VisualShaderNodeStep_8v6hq"]
+
+[sub_resource type="VisualShaderNodeFloatFunc" id="VisualShaderNodeFloatFunc_jao21"]
+function = 31
+
+[sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_r8g8n"]
+parameter_name = "ColorParameter"
+default_value_enabled = true
+default_value = Color(0, 0, 12.5, 1)
+
+[sub_resource type="VisualShader" id="VisualShader_b6her"]
+code = "shader_type spatial;
+render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_schlick_ggx;
+
+
+// Varyings
+varying vec3 WorldPos;
+
+uniform vec4 BaseColor : source_color = vec4(1.000000, 1.000000, 1.000000, 1.000000);
+uniform float DissolveHeight = 0.25;
+uniform float NoiseScale = 0.5;
+uniform float NoiseSize : hint_range(0, 500, 1) = 10;
+uniform float GlowThickness : hint_range(0, 1) = 0.05000000074506;
+uniform vec4 ColorParameter : source_color = vec4(0.000000, 0.000000, 12.500000, 1.000000);
+
+
+// PerlinNoise3D
+
+		vec3 mod289_3(vec3 x) {
+			return x - floor(x * (1.0 / 289.0)) * 289.0;
+		}
+
+		vec4 mod289_4(vec4 x) {
+			return x - floor(x * (1.0 / 289.0)) * 289.0;
+		}
+
+		vec4 permute(vec4 x) {
+			return mod289_4(((x * 34.0) + 1.0) * x);
+		}
+
+		vec4 taylorInvSqrt(vec4 r) {
+			return 1.79284291400159 - 0.85373472095314 * r;
+		}
+
+		vec3 fade(vec3 t) {
+			return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+		}
+
+		// Classic Perlin noise.
+		float cnoise(vec3 P) {
+			vec3 Pi0 = floor(P); // Integer part for indexing.
+			vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1.
+			Pi0 = mod289_3(Pi0);
+			Pi1 = mod289_3(Pi1);
+			vec3 Pf0 = fract(P); // Fractional part for interpolation.
+			vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0.
+			vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+			vec4 iy = vec4(Pi0.yy, Pi1.yy);
+			vec4 iz0 = vec4(Pi0.z);
+			vec4 iz1 = vec4(Pi1.z);
+
+			vec4 ixy = permute(permute(ix) + iy);
+			vec4 ixy0 = permute(ixy + iz0);
+			vec4 ixy1 = permute(ixy + iz1);
+
+			vec4 gx0 = ixy0 * (1.0 / 7.0);
+			vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+			gx0 = fract(gx0);
+			vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+			vec4 sz0 = step(gz0, vec4(0.0));
+			gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+			gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+
+			vec4 gx1 = ixy1 * (1.0 / 7.0);
+			vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+			gx1 = fract(gx1);
+			vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+			vec4 sz1 = step(gz1, vec4(0.0));
+			gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+			gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+
+			vec3 g000 = vec3(gx0.x, gy0.x, gz0.x);
+			vec3 g100 = vec3(gx0.y, gy0.y, gz0.y);
+			vec3 g010 = vec3(gx0.z, gy0.z, gz0.z);
+			vec3 g110 = vec3(gx0.w, gy0.w, gz0.w);
+			vec3 g001 = vec3(gx1.x, gy1.x, gz1.x);
+			vec3 g101 = vec3(gx1.y, gy1.y, gz1.y);
+			vec3 g011 = vec3(gx1.z, gy1.z, gz1.z);
+			vec3 g111 = vec3(gx1.w, gy1.w, gz1.w);
+
+			vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+			g000 *= norm0.x;
+			g010 *= norm0.y;
+			g100 *= norm0.z;
+			g110 *= norm0.w;
+			vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+			g001 *= norm1.x;
+			g011 *= norm1.y;
+			g101 *= norm1.z;
+			g111 *= norm1.w;
+
+			float n000 = dot(g000, Pf0);
+			float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+			float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+			float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+			float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+			float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+			float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+			float n111 = dot(g111, Pf1);
+
+			vec3 fade_xyz = fade(Pf0);
+			vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
+			vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+			float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);
+			return 2.2 * n_xyz;
+		}
+	
+
+void vertex() {
+	WorldPos = vec3(0.0);
+}
+
+void fragment() {
+// ColorParameter:2
+	vec4 n_out2p0 = BaseColor;
+
+
+// FloatParameter:6
+	float n_out6p0 = DissolveHeight;
+
+
+// FloatParameter:16
+	float n_out16p0 = NoiseScale;
+
+
+// Input:27
+	vec3 n_out27p0 = VERTEX;
+
+
+// FloatConstant:11
+	float n_out11p0 = 0.000000;
+
+
+// FloatParameter:12
+	float n_out12p0 = NoiseSize;
+
+
+// Input:26
+	float n_out26p0 = TIME;
+
+
+	float n_out10p0;
+// PerlinNoise3D:10
+	{
+		n_out10p0 = cnoise(vec3((n_out27p0 + vec3(n_out11p0)) * n_out12p0 + n_out26p0)) * 0.5 + 0.5;
+	}
+
+
+// FloatOp:14
+	float n_out14p0 = n_out16p0 * n_out10p0;
+
+
+// FloatOp:13
+	float n_in13p1 = 0.50000;
+	float n_out13p0 = n_out16p0 * n_in13p1;
+
+
+// FloatOp:15
+	float n_out15p0 = n_out14p0 - n_out13p0;
+
+
+// VectorDecompose:17
+	float n_out17p0 = n_out27p0.x;
+	float n_out17p1 = n_out27p0.y;
+	float n_out17p2 = n_out27p0.z;
+
+
+// FloatOp:18
+	float n_out18p0 = n_out15p0 + n_out17p1;
+
+
+// Step:7
+	float n_out7p0 = step(n_out6p0, n_out18p0);
+
+
+// FloatFunc:8
+	float n_out8p0 = 1.0 - n_out7p0;
+
+
+// FloatParameter:19
+	float n_out19p0 = GlowThickness;
+
+
+// FloatOp:21
+	float n_out21p0 = n_out6p0 - n_out19p0;
+
+
+// Step:23
+	float n_out23p0 = step(n_out21p0, n_out18p0);
+
+
+// FloatOp:20
+	float n_out20p0 = n_out8p0 * n_out23p0;
+
+
+// ColorParameter:9
+	vec4 n_out9p0 = ColorParameter;
+
+
+// VectorOp:24
+	vec3 n_out24p0 = vec3(n_out20p0) * vec3(n_out9p0.xyz);
+
+
+// FloatConstant:3
+	float n_out3p0 = 0.500000;
+
+
+// Output:0
+	ALBEDO = vec3(n_out2p0.xyz);
+	ALPHA = n_out8p0;
+	EMISSION = n_out24p0;
+	ALPHA_SCISSOR_THRESHOLD = n_out3p0;
+
+
+}
+"
+varyings/WorldPos = "0,4"
+nodes/vertex/0/position = Vector2(660, 260)
+nodes/fragment/2/node = SubResource("VisualShaderNodeColorParameter_bn7j8")
+nodes/fragment/2/position = Vector2(-40, 80)
+nodes/fragment/3/node = SubResource("VisualShaderNodeFloatConstant_imuxy")
+nodes/fragment/3/position = Vector2(160, 560)
+nodes/fragment/6/node = SubResource("VisualShaderNodeFloatParameter_gc8s5")
+nodes/fragment/6/position = Vector2(-800, 1320)
+nodes/fragment/7/node = SubResource("VisualShaderNodeStep_8v6hq")
+nodes/fragment/7/position = Vector2(-640, 740)
+nodes/fragment/8/node = SubResource("VisualShaderNodeFloatFunc_jao21")
+nodes/fragment/8/position = Vector2(-380, 600)
+nodes/fragment/9/node = SubResource("VisualShaderNodeColorParameter_r8g8n")
+nodes/fragment/9/position = Vector2(120, 1040)
+nodes/fragment/10/node = SubResource("VisualShaderNodeCustom_n0xux")
+nodes/fragment/10/position = Vector2(-1940, 1080)
+nodes/fragment/11/node = SubResource("VisualShaderNodeFloatConstant_5wm45")
+nodes/fragment/11/position = Vector2(-2120, 1180)
+nodes/fragment/12/node = SubResource("VisualShaderNodeFloatParameter_ufqcn")
+nodes/fragment/12/position = Vector2(-2440, 940)
+nodes/fragment/13/node = SubResource("VisualShaderNodeFloatOp_0ac24")
+nodes/fragment/13/position = Vector2(-1700, 800)
+nodes/fragment/14/node = SubResource("VisualShaderNodeFloatOp_wo0n3")
+nodes/fragment/14/position = Vector2(-1700, 1060)
+nodes/fragment/15/node = SubResource("VisualShaderNodeFloatOp_pq3pr")
+nodes/fragment/15/position = Vector2(-1540, 920)
+nodes/fragment/16/node = SubResource("VisualShaderNodeFloatParameter_e2nqd")
+nodes/fragment/16/position = Vector2(-2040, 820)
+nodes/fragment/17/node = SubResource("VisualShaderNodeVectorDecompose_6xmj0")
+nodes/fragment/17/position = Vector2(-2060, 640)
+nodes/fragment/18/node = SubResource("VisualShaderNodeFloatOp_aqyuy")
+nodes/fragment/18/position = Vector2(-1120, 780)
+nodes/fragment/19/node = SubResource("VisualShaderNodeFloatParameter_scghk")
+nodes/fragment/19/position = Vector2(-800, 1580)
+nodes/fragment/20/node = SubResource("VisualShaderNodeFloatOp_p6twi")
+nodes/fragment/20/position = Vector2(-20, 880)
+nodes/fragment/21/node = SubResource("VisualShaderNodeFloatOp_vv5hq")
+nodes/fragment/21/position = Vector2(-360, 1480)
+nodes/fragment/23/node = SubResource("VisualShaderNodeStep_y0ucb")
+nodes/fragment/23/position = Vector2(-20, 1340)
+nodes/fragment/24/node = SubResource("VisualShaderNodeVectorOp_262vt")
+nodes/fragment/24/position = Vector2(240, 780)
+nodes/fragment/26/node = SubResource("VisualShaderNodeInput_k22tw")
+nodes/fragment/26/position = Vector2(-2120, 1440)
+nodes/fragment/27/node = SubResource("VisualShaderNodeInput_t0v6m")
+nodes/fragment/27/position = Vector2(-2480, 500)
+nodes/fragment/connections = PackedInt32Array(3, 0, 0, 19, 2, 0, 0, 0, 6, 0, 7, 0, 7, 0, 8, 0, 11, 0, 10, 1, 12, 0, 10, 2, 14, 0, 15, 0, 13, 0, 15, 1, 16, 0, 13, 0, 10, 0, 14, 1, 16, 0, 14, 0, 15, 0, 18, 0, 17, 1, 18, 1, 18, 0, 7, 1, 6, 0, 21, 0, 19, 0, 21, 1, 18, 0, 23, 1, 21, 0, 23, 0, 20, 0, 24, 0, 9, 0, 24, 1, 24, 0, 0, 5, 23, 0, 20, 1, 8, 0, 20, 0, 26, 0, 10, 3, 8, 0, 0, 1, 27, 0, 17, 0, 27, 0, 10, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_etkum"]
+render_priority = 0
+shader = SubResource("VisualShader_b6her")
+shader_parameter/BaseColor = Color(0.439216, 0.705882, 0.854902, 1)
+shader_parameter/DissolveHeight = 0.0
+shader_parameter/NoiseScale = 0.5
+shader_parameter/NoiseSize = 10.0
+shader_parameter/GlowThickness = 0.05
+shader_parameter/ColorParameter = Color(0, 82.812, 0, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_3umib"]
+
+[sub_resource type="Animation" id="Animation_pilte"]
+length = 0.001
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material_override:shader_parameter/DissolveHeight")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+
+[sub_resource type="Animation" id="Animation_qxuq0"]
+resource_name = "dissolve"
+loop_mode = 1
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material_override:shader_parameter/DissolveHeight")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(0, 0),
+"points": PackedFloat32Array(1, -0.25, 0, 0.25, 0, -1, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0, 1)
+}
+
+[sub_resource type="Animation" id="Animation_xlfhf"]
+resource_name = "dissolve2"
+length = 2.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material_override:shader_parameter/DissolveHeight")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [1.0, -1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_sn5t5"]
+_data = {
+"RESET": SubResource("Animation_pilte"),
+"dissolve": SubResource("Animation_qxuq0"),
+"dissolve2": SubResource("Animation_xlfhf")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_34rt7"]
+render_priority = 0
+shader = ExtResource("1_ocsgl")
+shader_parameter/BaseColor = Color(0.0196078, 0.0196078, 0.0196078, 1)
+shader_parameter/DissolveHeight = 0.0
+shader_parameter/NoiseScale = 0.5
+shader_parameter/NoiseSize = 10.0
+shader_parameter/GlowThickness = 0.05
+shader_parameter/ColorParameter = Color(0, 16.146, 40.104, 1)
+
+[sub_resource type="Environment" id="Environment_nepxk"]
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_aivhh"]
+albedo_color = Color(0.101961, 0.25098, 0.321569, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_p8djq"]
+size = Vector2(100, 100)
+
+[node name="Shaders" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.02342, -0.816476)
+material_override = SubResource("ShaderMaterial_etkum")
+mesh = SubResource("SphereMesh_3umib")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="MeshInstance3D"]
+libraries = {
+"": SubResource("AnimationLibrary_sn5t5")
+}
+autoplay = "dissolve2"
+
+[node name="VertDissolve" parent="." instance=ExtResource("2_qpbab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.33524, 0.880899, -0.816476)
+material_override = SubResource("ShaderMaterial_34rt7")
+mesh = SubResource("SphereMesh_3umib")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="MeshInstance3D3"]
+libraries = {
+"": SubResource("AnimationLibrary_sn5t5")
+}
+autoplay = "dissolve2"
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, -2.01986, 1.8037, 2.55763)
+environment = SubResource("Environment_nepxk")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.411069, 0.911604, 0, -0.911604, 0.411069, 0, 0.855353, 1.83334)
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_aivhh")
+mesh = SubResource("PlaneMesh_p8djq")

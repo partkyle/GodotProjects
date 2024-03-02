@@ -1,0 +1,29 @@
+[gd_scene load_steps=7 format=3 uid="uid://r26pqus5cjil"]
+
+[ext_resource type="Shader" path="res://dissolve.gdshader" id="1_864ku"]
+[ext_resource type="Script" path="res://Dissolve.gd" id="2_xppnh"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_eumlb"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_dngpa"]
+noise = SubResource("FastNoiseLite_eumlb")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6xxnd"]
+render_priority = 0
+shader = ExtResource("1_864ku")
+shader_parameter/base_color = Color(0.215686, 0.937255, 0.929412, 1)
+shader_parameter/dissolve_height = 1.0
+shader_parameter/noise_scale = 0.1
+shader_parameter/glow_color = Color(57.292, 0, 14.062, 1)
+shader_parameter/glow_thickness = 0.05
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_dngpa")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_4dvdi"]
+
+[node name="VertDissolve" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+material_override = SubResource("ShaderMaterial_6xxnd")
+mesh = SubResource("CapsuleMesh_4dvdi")
+script = ExtResource("2_xppnh")

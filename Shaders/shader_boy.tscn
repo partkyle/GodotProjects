@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3 uid="uid://d2mrm67n725mf"]
+
+[ext_resource type="Script" path="res://SpawnShaders.gd" id="1_7ilq4"]
+[ext_resource type="PackedScene" uid="uid://r26pqus5cjil" path="res://vert_dissolve.tscn" id="2_wrygs"]
+
+[sub_resource type="Environment" id="Environment_sbkvh"]
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8tutx"]
+albedo_color = Color(0.101961, 0.25098, 0.321569, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_u1ys8"]
+size = Vector2(1000, 1000)
+
+[node name="ShaderBoy" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.87581, 0.482656, 0, -0.482656, 0.87581, 0.860256, 21.8345, 56.8309)
+environment = SubResource("Environment_sbkvh")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.411069, 0.911604, 0, -0.911604, 0.411069, 0, 0.855353, 1.83334)
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_8tutx")
+mesh = SubResource("PlaneMesh_u1ys8")
+
+[node name="SpawnShaders" type="Node3D" parent="."]
+script = ExtResource("1_7ilq4")
+model = ExtResource("2_wrygs")

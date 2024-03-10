@@ -12,10 +12,13 @@ noise = SubResource("FastNoiseLite_0o631")
 render_priority = 0
 shader = ExtResource("1_a1kxu")
 shader_parameter/base_color = Color(0, 1, 1, 1)
-shader_parameter/dissolve_height = 0.57
+shader_parameter/backface_color = Color(0, 0, 0, 1)
+shader_parameter/dissolve_height = 0.6
 shader_parameter/noise_scale = 0.1
+shader_parameter/time_scale = 0.1
 shader_parameter/glow_color = Color(57.292, 0, 14.062, 1)
 shader_parameter/glow_thickness = 0.05
+shader_parameter/backface_glow_color = Color(1, 1, 1, 1)
 shader_parameter/noise_texture = SubResource("NoiseTexture2D_3xx16")
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_wqper"]
